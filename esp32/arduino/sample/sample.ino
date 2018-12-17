@@ -4,23 +4,24 @@
 #include <BLE2902.h>
 
 // Device Name: Maximum 30 bytes
-#define DEVICE_NAME "LINE Things Trial ESP32"
+#define DEVICE_NAME "SHIWORI trial"
 
-// User service UUID: Change this to your generated service UUID
-#define USER_SERVICE_UUID "91E4E176-D0B9-464D-9FE4-52EE3E9F1552"
+// SHIWORI service UUID
+#define USER_SERVICE_UUID "5D97F2C7-C2A5-4937-87AF-6BA97A35803B"
 // User service characteristics
-#define WRITE_CHARACTERISTIC_UUID "E9062E71-9E62-4BC6-B0D3-35CDCD9B027B"
-#define NOTIFY_CHARACTERISTIC_UUID "62FBD229-6EDD-4D1A-B554-5C4E1BB29169"
+#define USER_SERVICE_UUID "6087A279-23B6-4909-840D-E880987AA192"
+#define WRITE_CHARACTERISTIC_UUID "23F77884-A41B-45B0-AB06-1FE1424E8760"
+#define NOTIFY_CHARACTERISTIC_UUID "4711F5D3-556A-4A3B-9263-CE98424B3B80"
 
-// PSDI Service UUID: Fixed value for Developer Trial
-#define PSDI_SERVICE_UUID "E625601E-9E55-4597-A598-76018A0D293D"
-#define PSDI_CHARACTERISTIC_UUID "26E2B12B-85F0-4F3F-9FDD-91D114270E6E"
+// PSDI Service UUID: Device only reader
+#define PSDI_SERVICE_UUID "6DA2DE8E-C374-4447-BBCC-71C678B5191E"
+#define PSDI_CHARACTERISTIC_UUID "90824656-5B19-4F06-A057-80824F122A8D"
 
 #define BUTTON 0
-#define LED1 2
+#define LED1 5
 
-BLEServer* thingsServer;
-BLESecurity *thingsSecurity;
+BLEServer* shiworiServer;
+BLESecurity *shiworiSecurity;
 BLEService* userService;
 BLEService* psdiService;
 BLECharacteristic* psdiCharacteristic;
@@ -62,10 +63,10 @@ void setup() {
   BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
 
   // Security Settings
-  BLESecurity *thingsSecurity = new BLESecurity();
-  thingsSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
-  thingsSecurity->setCapability(ESP_IO_CAP_NONE);
-  thingsSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+  //BLESecurity *shiworiSecurity = new BLESecurity();
+  //shiworiSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
+  //shiworiSecurity->setCapability(ESP_IO_CAP_NONE);
+  //shiworiSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
 
   setupServices();
   startAdvertising();
@@ -85,7 +86,7 @@ void loop() {
   // Disconnection
   if (!deviceConnected && oldDeviceConnected) {
     delay(500); // Wait for BLE Stack to be ready
-    thingsServer->startAdvertising(); // Restart advertising
+    shiworiServer->startAdvertising(); // Restart advertising
     oldDeviceConnected = deviceConnected;
   }
   // Connection
@@ -96,11 +97,11 @@ void loop() {
 
 void setupServices(void) {
   // Create BLE Server
-  thingsServer = BLEDevice::createServer();
-  thingsServer->setCallbacks(new serverCallbacks());
+  shiworiServer = BLEDevice::createServer();
+  shiworiServer->setCallbacks(new serverCallbacks());
 
   // Setup User Service
-  userService = thingsServer->createService(USER_SERVICE_UUID);
+  userService = shiworiServer->createService(USER_SERVICE_UUID);
   // Create Characteristics for User Service
   writeCharacteristic = userService->createCharacteristic(WRITE_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE);
   writeCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
@@ -114,7 +115,7 @@ void setupServices(void) {
   notifyCharacteristic->addDescriptor(ble9202);
 
   // Setup PSDI Service
-  psdiService = thingsServer->createService(PSDI_SERVICE_UUID);
+  psdiService = shiworiServer->createService(PSDI_SERVICE_UUID);
   psdiCharacteristic = psdiService->createCharacteristic(PSDI_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ);
   psdiCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
 
@@ -133,9 +134,9 @@ void startAdvertising(void) {
   scanResponseData.setFlags(0x06); // GENERAL_DISC_MODE 0x02 | BR_EDR_NOT_SUPPORTED 0x04
   scanResponseData.setName(DEVICE_NAME);
 
-  thingsServer->getAdvertising()->addServiceUUID(userService->getUUID());
-  thingsServer->getAdvertising()->setScanResponseData(scanResponseData);
-  thingsServer->getAdvertising()->start();
+  shiworiServer->getAdvertising()->addServiceUUID(userService->getUUID());
+  shiworiServer->getAdvertising()->setScanResponseData(scanResponseData);
+  shiworiServer->getAdvertising()->start();
 }
 
 void buttonAction() {
